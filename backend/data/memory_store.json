@@ -1,0 +1,1844 @@
+[
+  {
+    "id": "MEM-ADR-001",
+    "title": "Architecture Decision: PostgreSQL as Primary Relational Store",
+    "type": "architecture_decision",
+    "project": "Core Platform",
+    "technology": "PostgreSQL",
+    "author": "Elena Vance (Principal Architect), Marcus Brody (Lead DB Admin)",
+    "date": "2023-03-15",
+    "event": "Architecture proposal for PostgreSQL in Core Platform",
+    "context": "ACID compliance, robust JSONB support, extensive ecosystem, and strong team familiarity.",
+    "decision": "Adopt PostgreSQL 15 as the canonical relational data store for user, billing, and transactional data.",
+    "action": "Adopted PostgreSQL for Core Platform",
+    "outcome": "Zero data corruption incidents. Required connection pooling (PgBouncer) once service count exceeded 12.",
+    "lesson": "PostgreSQL connection limits are easily hit under microservice architectures without centralized pooling.",
+    "summary": "Decision to adopt PostgreSQL. Outcome: Zero data corruption incidents. Required connection pooling (PgBouncer) once service count exceeded 12.. Lesson: PostgreSQL connection limits are easily hit under microservice architectures without centralized pooling.",
+    "tags": [
+      "database",
+      "postgresql",
+      "core platform",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-001",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "MySQL 8.0",
+        "MongoDB",
+        "CockroachDB"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-002",
+    "title": "Architecture Decision: Redis for Recommendation Service Caching",
+    "type": "architecture_decision",
+    "project": "Recommendation Service",
+    "technology": "Redis",
+    "author": "Dave Chen (Senior Engineer), Priya Sharma (Backend Lead)",
+    "date": "2023-06-10",
+    "event": "Architecture proposal for Redis in Recommendation Service",
+    "context": "Sub-millisecond read latency needed to satisfy <50ms p99 SLA for the recommendation widget.",
+    "decision": "Introduce a shared Redis cluster as a caching layer in front of PostgreSQL for recommendation score lookups.",
+    "action": "Adopted Redis for Recommendation Service",
+    "outcome": "Initially succeeded, but later suffered cache stampedes and serialization overhead under bursty workload.",
+    "lesson": "Global shared cache without jittered TTLs and request coalescing creates severe thundering herd vulnerabilities under write-heavy bursts.",
+    "summary": "Decision to adopt Redis. Outcome: Initially succeeded, but later suffered cache stampedes and serialization overhead under bursty workload.. Lesson: Global shared cache without jittered TTLs and request coalescing creates severe thundering herd vulnerabilities under write-heavy bursts.",
+    "tags": [
+      "caching",
+      "redis",
+      "recommendation service",
+      "adr",
+      "superseded"
+    ],
+    "source_id": "ADR-002",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Memcached",
+        "In-memory Local Cache (Guava/LRU)",
+        "DynamoDB Accelerator"
+      ],
+      "status": "Superseded"
+    }
+  },
+  {
+    "id": "MEM-ADR-003",
+    "title": "Architecture Decision: Migration from Firebase Auth to Custom JWT & OAuth2",
+    "type": "architecture_decision",
+    "project": "Auth Service",
+    "technology": "JWT & OAuth2 (Hydra/Custom)",
+    "author": "Sarah Jenkins (Security Lead), Dave Chen (Senior Engineer)",
+    "date": "2023-08-20",
+    "event": "Architecture proposal for JWT & OAuth2 (Hydra/Custom) in Auth Service",
+    "context": "Enterprise customers required custom SAML/SSO integration, strict VPC data residency, and Firebase rate limits were throttling multi-tenant bursts.",
+    "decision": "Migrate away from Firebase Authentication in favor of self-hosted OAuth2 + RS256 signed JWT tokens.",
+    "action": "Adopted JWT & OAuth2 (Hydra/Custom) for Auth Service",
+    "outcome": "Significantly increased flexibility and reduced monthly SaaS bills by $4,200, but required dedicated maintenance for key rotation.",
+    "lesson": "Custom auth unlocks enterprise compliance but demands strict automated token rotation and session revocation infrastructure.",
+    "summary": "Decision to adopt JWT & OAuth2 (Hydra/Custom). Outcome: Significantly increased flexibility and reduced monthly SaaS bills by $4,200, but required dedicated maintenance for key rotation.. Lesson: Custom auth unlocks enterprise compliance but demands strict automated token rotation and session revocation infrastructure.",
+    "tags": [
+      "authentication",
+      "jwt & oauth2 (hydra/custom)",
+      "auth service",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-003",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Firebase Auth (status quo)",
+        "Auth0",
+        "Keycloak"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-004",
+    "title": "Architecture Decision: Event-Driven Microservices with Apache Kafka",
+    "type": "architecture_decision",
+    "project": "Event Bus",
+    "technology": "Apache Kafka",
+    "author": "Elena Vance (Principal Architect), Alex Rivera (Infra Lead)",
+    "date": "2023-10-05",
+    "event": "Architecture proposal for Apache Kafka in Event Bus",
+    "context": "Decouple synchronous HTTP request chains across billing, notification, and audit trails.",
+    "decision": "Adopt Apache Kafka (AWS MSK) as the central event stream for async inter-service communication.",
+    "action": "Adopted Apache Kafka for Event Bus",
+    "outcome": "Enabled seamless event distribution. Rebalance storms occurred during rolling deploys before static group membership was configured.",
+    "lesson": "Always enable Kafka static membership and configure proper consumer heartbeat timeouts to avoid cascading rebalances during rolling deployments.",
+    "summary": "Decision to adopt Apache Kafka. Outcome: Enabled seamless event distribution. Rebalance storms occurred during rolling deploys before static group membership was configured.. Lesson: Always enable Kafka static membership and configure proper consumer heartbeat timeouts to avoid cascading rebalances during rolling deployments.",
+    "tags": [
+      "messaging",
+      "apache kafka",
+      "event bus",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-004",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "RabbitMQ",
+        "AWS SQS/SNS",
+        "NATS JetStream"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-005",
+    "title": "Architecture Decision: Adoption of Kubernetes (EKS) for Container Orchestration",
+    "type": "architecture_decision",
+    "project": "Core Infrastructure",
+    "technology": "Kubernetes (EKS)",
+    "author": "Alex Rivera (Infra Lead), Marcus Brody (Lead DB Admin)",
+    "date": "2023-11-15",
+    "event": "Architecture proposal for Kubernetes (EKS) in Core Infrastructure",
+    "context": "Better autoscaling flexibility (Karpenter), standardized Helm chart deployments, and multi-region readiness.",
+    "decision": "Migrate all containerized workloads from AWS ECS to Amazon EKS managed Kubernetes clusters.",
+    "action": "Adopted Kubernetes (EKS) for Core Infrastructure",
+    "outcome": "Achieved sub-minute node scaling and simplified preview environments.",
+    "lesson": "Proper resource requests/limits (CPU and Memory) and Horizontal Pod Autoscaler policies are non-negotiable to avoid node-level OOM cascading panics.",
+    "summary": "Decision to adopt Kubernetes (EKS). Outcome: Achieved sub-minute node scaling and simplified preview environments.. Lesson: Proper resource requests/limits (CPU and Memory) and Horizontal Pod Autoscaler policies are non-negotiable to avoid node-level OOM cascading panics.",
+    "tags": [
+      "infrastructure",
+      "kubernetes (eks)",
+      "core infrastructure",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-005",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "AWS ECS Fargate",
+        "Nomad",
+        "Docker Swarm"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-006",
+    "title": "Architecture Decision: Replacing Redis with Multi-Tier Local LRU & DynamoDB in Recommendation Service",
+    "type": "architecture_decision",
+    "project": "Recommendation Service",
+    "technology": "Local LRU + DynamoDB",
+    "author": "Priya Sharma (Backend Lead), Elena Vance (Principal Architect)",
+    "date": "2024-02-02",
+    "event": "Architecture proposal for Local LRU + DynamoDB in Recommendation Service",
+    "context": "Redis incident INC-101 demonstrated that network roundtrips to shared Redis cluster under bursty recommendation traffic created hot shards and thundering herds.",
+    "decision": "Deprecate Redis for the Recommendation Service in favor of a 2-tier architecture: In-process Local LRU (Go-cache) backed by AWS DynamoDB with single-digit ms point reads.",
+    "action": "Adopted Local LRU + DynamoDB for Recommendation Service",
+    "outcome": "p99 latency dropped from 145ms to 8ms. Recommendation availability rose from 99.85% to 99.99%.",
+    "lesson": "For read-heavy localized scoring models, in-memory local caches with deterministic invalidation outperform remote shared Redis clusters.",
+    "summary": "Decision to adopt Local LRU + DynamoDB. Outcome: p99 latency dropped from 145ms to 8ms. Recommendation availability rose from 99.85% to 99.99%.. Lesson: For read-heavy localized scoring models, in-memory local caches with deterministic invalidation outperform remote shared Redis clusters.",
+    "tags": [
+      "caching",
+      "local lru + dynamodb",
+      "recommendation service",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-006",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Redis Cluster with Read Replicas",
+        "Aerospike",
+        "Local LRU + DynamoDB"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-007",
+    "title": "Architecture Decision: GraphQL Gateway for Web and Mobile Client Aggregation",
+    "type": "architecture_decision",
+    "project": "Client Gateway",
+    "technology": "GraphQL (Apollo Router)",
+    "author": "Dave Chen (Senior Engineer), Zack Taylor (Frontend Lead)",
+    "date": "2024-03-12",
+    "event": "Architecture proposal for GraphQL (Apollo Router) in Client Gateway",
+    "context": "Eliminate over-fetching and mobile round-trip waterfalls across 8 downstream microservices.",
+    "decision": "Deploy a federated GraphQL Gateway using Apollo Router in Rust to serve Web and Mobile apps.",
+    "action": "Adopted GraphQL (Apollo Router) for Client Gateway",
+    "outcome": "Client page load times improved by 40%. Required query depth limiting to prevent malicious nested query denial-of-service.",
+    "lesson": "Federated GraphQL gateways require strict query complexity calculation and depth limiting in production.",
+    "summary": "Decision to adopt GraphQL (Apollo Router). Outcome: Client page load times improved by 40%. Required query depth limiting to prevent malicious nested query denial-of-service.. Lesson: Federated GraphQL gateways require strict query complexity calculation and depth limiting in production.",
+    "tags": [
+      "api gateway",
+      "graphql (apollo router)",
+      "client gateway",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-007",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "BFF (Backend-for-Frontend) REST endpoints",
+        "gRPC-Web",
+        "Hasura"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-008",
+    "title": "Architecture Decision: Internal Service-to-Service Communication via gRPC and Protobuf",
+    "type": "architecture_decision",
+    "project": "Inter-Service Mesh",
+    "technology": "gRPC & Protocol Buffers",
+    "author": "Elena Vance (Principal Architect), Priya Sharma (Backend Lead)",
+    "date": "2024-04-18",
+    "event": "Architecture proposal for gRPC & Protocol Buffers in Inter-Service Mesh",
+    "context": "JSON over HTTP/1.1 serialization consumed excessive CPU cycles and lacked strict compile-time contract enforcement.",
+    "decision": "Standardize all synchronous backend-to-backend RPC calls on gRPC with Protobuf definitions in a central repository.",
+    "action": "Adopted gRPC & Protocol Buffers for Inter-Service Mesh",
+    "outcome": "Inter-service latency decreased by 12ms on average. Compile-time protobuf checks caught breaking schema changes in CI.",
+    "lesson": "Always set explicit gRPC client timeouts (deadlines) and propagate cancellation contexts downstream to prevent thread leaks.",
+    "summary": "Decision to adopt gRPC & Protocol Buffers. Outcome: Inter-service latency decreased by 12ms on average. Compile-time protobuf checks caught breaking schema changes in CI.. Lesson: Always set explicit gRPC client timeouts (deadlines) and propagate cancellation contexts downstream to prevent thread leaks.",
+    "tags": [
+      "networking",
+      "grpc & protocol buffers",
+      "inter-service mesh",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-008",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "REST + OpenAPI CodeGen",
+        "Thrift",
+        "Cap'n Proto"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-009",
+    "title": "Architecture Decision: Centralized Observability with OpenTelemetry and Datadog",
+    "type": "architecture_decision",
+    "project": "Platform Monitoring",
+    "technology": "OpenTelemetry & Datadog",
+    "author": "Alex Rivera (Infra Lead), Marcus Brody (Lead DB Admin)",
+    "date": "2024-05-22",
+    "event": "Architecture proposal for OpenTelemetry & Datadog in Platform Monitoring",
+    "context": "Debug distributed microservice latency bottlenecks with end-to-end trace correlation IDs.",
+    "decision": "Instrument all services with OpenTelemetry SDKs exporting traces, metrics, and logs to Datadog.",
+    "action": "Adopted OpenTelemetry & Datadog for Platform Monitoring",
+    "outcome": "Mean Time to Detect (MTTD) dropped from 45 minutes to 4 minutes during production incidents.",
+    "lesson": "Sample rate must be adjusted dynamically (e.g. 100% on errors, 5% on 200 OK) to manage ingest costs without losing diagnostic power.",
+    "summary": "Decision to adopt OpenTelemetry & Datadog. Outcome: Mean Time to Detect (MTTD) dropped from 45 minutes to 4 minutes during production incidents.. Lesson: Sample rate must be adjusted dynamically (e.g. 100% on errors, 5% on 200 OK) to manage ingest costs without losing diagnostic power.",
+    "tags": [
+      "observability",
+      "opentelemetry & datadog",
+      "platform monitoring",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-009",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Prometheus + Jaeger + Loki",
+        "New Relic",
+        "Dynatrace"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-010",
+    "title": "Architecture Decision: Database Connection Pooling with PgBouncer",
+    "type": "architecture_decision",
+    "project": "Core Platform",
+    "technology": "PgBouncer",
+    "author": "Marcus Brody (Lead DB Admin), Elena Vance (Principal Architect)",
+    "date": "2024-06-05",
+    "event": "Architecture proposal for PgBouncer in Core Platform",
+    "context": "Resolve incident INC-102 where microservice pod autoscaling spawned 1,200 direct DB connections, crashing PostgreSQL backend processes.",
+    "decision": "Deploy PgBouncer in transaction pooling mode in front of primary Aurora PostgreSQL instances.",
+    "action": "Adopted PgBouncer for Core Platform",
+    "outcome": "PostgreSQL CPU utilization dropped from 85% to 22% during peak sales traffic.",
+    "lesson": "Transaction pooling disables prepared statements across sessions unless `server_reset_query` or binary protocol extensions are properly configured.",
+    "summary": "Decision to adopt PgBouncer. Outcome: PostgreSQL CPU utilization dropped from 85% to 22% during peak sales traffic.. Lesson: Transaction pooling disables prepared statements across sessions unless `server_reset_query` or binary protocol extensions are properly configured.",
+    "tags": [
+      "database",
+      "pgbouncer",
+      "core platform",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-010",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "AWS RDS Proxy",
+        "Application-level HikariCP pools only",
+        "HAProxy"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-011",
+    "title": "Architecture Decision: S3 and CloudFront CDN for Static Asset & Document Storage",
+    "type": "architecture_decision",
+    "project": "Asset Pipeline",
+    "technology": "AWS S3 & CloudFront",
+    "author": "Alex Rivera (Infra Lead), Zack Taylor (Frontend Lead)",
+    "date": "2024-07-14",
+    "event": "Architecture proposal for AWS S3 & CloudFront in Asset Pipeline",
+    "context": "Reduce backend server bandwidth saturation and ensure global edge caching with sub-30ms TTFB.",
+    "decision": "Serve all user uploads, generated PDF reports, and frontend SPA bundles via S3 origin behind CloudFront CDN with strict signed URLs.",
+    "action": "Adopted AWS S3 & CloudFront for Asset Pipeline",
+    "outcome": "Offloaded 94% of static HTTP traffic from backend web servers.",
+    "lesson": "Frontend bundle assets must include content hashes in filename to avoid stale cache issues during rapid deployments.",
+    "summary": "Decision to adopt AWS S3 & CloudFront. Outcome: Offloaded 94% of static HTTP traffic from backend web servers.. Lesson: Frontend bundle assets must include content hashes in filename to avoid stale cache issues during rapid deployments.",
+    "tags": [
+      "storage & cdn",
+      "aws s3 & cloudfront",
+      "asset pipeline",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-011",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Cloudflare R2 + CDN",
+        "Fastly + GCS",
+        "Self-hosted MinIO"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-012",
+    "title": "Architecture Decision: Temporal.io for Long-Running Distributed Workflows",
+    "type": "architecture_decision",
+    "project": "Billing & Onboarding Workflows",
+    "technology": "Temporal.io",
+    "author": "Priya Sharma (Backend Lead), Sarah Jenkins (Security Lead)",
+    "date": "2024-08-19",
+    "event": "Architecture proposal for Temporal.io in Billing & Onboarding Workflows",
+    "context": "Custom cron jobs and Kafka saga choreographies were creating untraceable partial failure states and inconsistent payment retries.",
+    "decision": "Adopt Temporal.io as the stateful orchestrator for multi-day customer onboarding, KYC checks, and billing subscription cycles.",
+    "action": "Adopted Temporal.io for Billing & Onboarding Workflows",
+    "outcome": "Eliminated 100% of stuck onboarding states. Payment retry automation recovered $38,000 in monthly churned revenue.",
+    "lesson": "Workflow code must remain strictly deterministic: never call non-deterministic functions (like `Date.now()` or random generators) directly inside workflow functions; use Temporal Activities.",
+    "summary": "Decision to adopt Temporal.io. Outcome: Eliminated 100% of stuck onboarding states. Payment retry automation recovered $38,000 in monthly churned revenue.. Lesson: Workflow code must remain strictly deterministic: never call non-deterministic functions (like `Date.now()` or random generators) directly inside workflow functions; use Temporal Activities.",
+    "tags": [
+      "orchestration",
+      "temporal.io",
+      "billing & onboarding workflows",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-012",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "AWS Step Functions",
+        "Celery Canvas",
+        "Camunda"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-013",
+    "title": "Architecture Decision: Tenant Isolation and Sharding Strategy",
+    "type": "architecture_decision",
+    "project": "Enterprise Multi-Tenancy",
+    "technology": "PostgreSQL Row-Level Security (RLS) + Schema Sharding",
+    "author": "Elena Vance (Principal Architect), Sarah Jenkins (Security Lead)",
+    "date": "2024-09-02",
+    "event": "Architecture proposal for PostgreSQL Row-Level Security (RLS) + Schema Sharding in Enterprise Multi-Tenancy",
+    "context": "Comply with SOC2 Type II and HIPAA data isolation mandates without the cost of provisioning discrete databases per customer.",
+    "decision": "Implement PostgreSQL Row-Level Security (RLS) with tenant context injection for standard tiers, and dedicated schema partitions for Tier-1 Enterprise customers.",
+    "action": "Adopted PostgreSQL Row-Level Security (RLS) + Schema Sharding for Enterprise Multi-Tenancy",
+    "outcome": "Passed external SOC2 Type II audit with zero findings. Query planner overhead remained under 3%.",
+    "lesson": "Always index composite keys `(tenant_id, id)` and bypass RLS only via securely gated background maintenance workers.",
+    "summary": "Decision to adopt PostgreSQL Row-Level Security (RLS) + Schema Sharding. Outcome: Passed external SOC2 Type II audit with zero findings. Query planner overhead remained under 3%.. Lesson: Always index composite keys `(tenant_id, id)` and bypass RLS only via securely gated background maintenance workers.",
+    "tags": [
+      "architecture",
+      "postgresql row-level security (rls) + schema sharding",
+      "enterprise multi-tenancy",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-013",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Database-per-tenant",
+        "Shared tables with simple `tenant_id` WHERE clauses",
+        "DynamoDB multi-tenancy"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-014",
+    "title": "Architecture Decision: Distributed Rate Limiting via Sliding Window on Envoy",
+    "type": "architecture_decision",
+    "project": "Client Gateway",
+    "technology": "Envoy Proxy Rate Limit Service",
+    "author": "Alex Rivera (Infra Lead), Dave Chen (Senior Engineer)",
+    "date": "2024-10-11",
+    "event": "Architecture proposal for Envoy Proxy Rate Limit Service in Client Gateway",
+    "context": "Prevent API abuse and brute-force credential stuffing without adding latency overhead to internal services.",
+    "decision": "Deploy Envoy's external rate-limiting filter using a Sliding Window algorithm backed by high-availability key-value stores.",
+    "action": "Adopted Envoy Proxy Rate Limit Service for Client Gateway",
+    "outcome": "Mitigated 3 large-scale scraping attempts with zero downstream compute degradation.",
+    "lesson": "Rate limiting response headers (`X-RateLimit-Remaining`, `Retry-After`) must be clearly returned to prevent honest client SDK retry thrashing.",
+    "summary": "Decision to adopt Envoy Proxy Rate Limit Service. Outcome: Mitigated 3 large-scale scraping attempts with zero downstream compute degradation.. Lesson: Rate limiting response headers (`X-RateLimit-Remaining`, `Retry-After`) must be clearly returned to prevent honest client SDK retry thrashing.",
+    "tags": [
+      "security & traffic",
+      "envoy proxy rate limit service",
+      "client gateway",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-014",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Application middleware token bucket",
+        "Cloudflare Rate Limiting (DNS level only)",
+        "Kong Rate Limiter"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-015",
+    "title": "Architecture Decision: Hindsight Memory Engine for Persistent Contextual AI Agents",
+    "type": "architecture_decision",
+    "project": "AI Assistant & Organizational Brain",
+    "technology": "Hindsight (Vectorize)",
+    "author": "Elena Vance (Principal Architect), Priya Sharma (Backend Lead)",
+    "date": "2024-11-04",
+    "event": "Architecture proposal for Hindsight (Vectorize) in AI Assistant & Organizational Brain",
+    "context": "Standard RAG systems lose historical context, cannot reason across causal sequences (Decision -> Incident -> Outcome -> Lesson), and cannot learn across interactions.",
+    "decision": "Standardize all company AI agents and internal organizational knowledge on Hindsight by Vectorize as the persistent memory and recall engine.",
+    "action": "Adopted Hindsight (Vectorize) for AI Assistant & Organizational Brain",
+    "outcome": "Delivered CompanyBrain: engineers can trace why decisions were made and avoid repeating past architectural failures.",
+    "lesson": "Persistent memory must structure data into causal relationships (Event -> Context -> Decision -> Action -> Outcome -> Lesson) rather than treating documents as disconnected chunks.",
+    "summary": "Decision to adopt Hindsight (Vectorize). Outcome: Delivered CompanyBrain: engineers can trace why decisions were made and avoid repeating past architectural failures.. Lesson: Persistent memory must structure data into causal relationships (Event -> Context -> Decision -> Action -> Outcome -> Lesson) rather than treating documents as disconnected chunks.",
+    "tags": [
+      "ai & memory",
+      "hindsight (vectorize)",
+      "ai assistant & organizational brain",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-015",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Standard Vector Search (Pinecone/pgvector RAG)",
+        "LangChain Ephemeral Memory",
+        "MemGPT"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-016",
+    "title": "Architecture Decision: Micro-Frontend Strategy via Webpack Module Federation",
+    "type": "architecture_decision",
+    "project": "Web App",
+    "technology": "Module Federation",
+    "author": "Zack Taylor (Frontend Lead), Dave Chen (Senior Engineer)",
+    "date": "2024-11-28",
+    "event": "Architecture proposal for Module Federation in Web App",
+    "context": "Allow checkout, dashboard, settings, and analytics squads to deploy independently.",
+    "decision": "Split the monolithic React web app into 4 independent micro-frontends deployed via Module Federation.",
+    "action": "Adopted Module Federation for Web App",
+    "outcome": "Created massive version mismatch runtime errors, duplicated CSS style leakage, and quadrupled bundle download size on initial load.",
+    "lesson": "Micro-frontends introduce severe cognitive and network overhead for teams under 80 engineers; a unified Turborepo package monorepo is far more effective.",
+    "summary": "Decision to adopt Module Federation. Outcome: Created massive version mismatch runtime errors, duplicated CSS style leakage, and quadrupled bundle download size on initial load.. Lesson: Micro-frontends introduce severe cognitive and network overhead for teams under 80 engineers; a unified Turborepo package monorepo is far more effective.",
+    "tags": [
+      "frontend",
+      "module federation",
+      "web app",
+      "adr",
+      "superseded"
+    ],
+    "source_id": "ADR-016",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Monorepo with independent build packages",
+        "iframe embedding",
+        "Single SPA monolith"
+      ],
+      "status": "Superseded"
+    }
+  },
+  {
+    "id": "MEM-ADR-017",
+    "title": "Architecture Decision: Chaos Engineering and Fault Injection with Chaos Mesh",
+    "type": "architecture_decision",
+    "project": "Reliability Platform",
+    "technology": "Chaos Mesh (CNCF)",
+    "author": "Alex Rivera (Infra Lead), Marcus Brody (Lead DB Admin)",
+    "date": "2024-12-15",
+    "event": "Architecture proposal for Chaos Mesh (CNCF) in Reliability Platform",
+    "context": "Validate circuit breakers, failover times, and retry policies before they fail during real production peak hours.",
+    "decision": "Schedule automated weekly synthetic network latency and pod termination drills in the staging and pre-production environments using Chaos Mesh.",
+    "action": "Adopted Chaos Mesh (CNCF) for Reliability Platform",
+    "outcome": "Discovered 4 latent deadlock scenarios in gRPC client pools and improved failover recovery time from 6 minutes to 35 seconds.",
+    "lesson": "Chaos engineering must always be coupled with automated rollback safeguards and granular alert suppression during drill windows.",
+    "summary": "Decision to adopt Chaos Mesh (CNCF). Outcome: Discovered 4 latent deadlock scenarios in gRPC client pools and improved failover recovery time from 6 minutes to 35 seconds.. Lesson: Chaos engineering must always be coupled with automated rollback safeguards and granular alert suppression during drill windows.",
+    "tags": [
+      "reliability",
+      "chaos mesh (cncf)",
+      "reliability platform",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-017",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Gremlin",
+        "AWS Fault Injection Simulator",
+        "Manual chaos drills"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-018",
+    "title": "Architecture Decision: Centralized Secret Management with HashiCorp Vault",
+    "type": "architecture_decision",
+    "project": "Security Infrastructure",
+    "technology": "HashiCorp Vault",
+    "author": "Sarah Jenkins (Security Lead), Alex Rivera (Infra Lead)",
+    "date": "2025-01-10",
+    "event": "Architecture proposal for HashiCorp Vault in Security Infrastructure",
+    "context": "Eliminate static long-lived database credentials in Kubernetes ConfigMaps and enforce automated 24-hour credential rotation.",
+    "decision": "Migrate all environment variables and database credentials to dynamic secrets managed by HashiCorp Vault with Kubernetes ServiceAccount auth.",
+    "action": "Adopted HashiCorp Vault for Security Infrastructure",
+    "outcome": "Eliminated credential exposure risks. Required careful tuning of sidecar agent token renewal loops (INC-110).",
+    "lesson": "Always configure automatic token renewal sidecars with graceful retry loops before lease expiration to prevent microservice authentication lockouts.",
+    "summary": "Decision to adopt HashiCorp Vault. Outcome: Eliminated credential exposure risks. Required careful tuning of sidecar agent token renewal loops (INC-110).. Lesson: Always configure automatic token renewal sidecars with graceful retry loops before lease expiration to prevent microservice authentication lockouts.",
+    "tags": [
+      "security",
+      "hashicorp vault",
+      "security infrastructure",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-018",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "AWS Secrets Manager",
+        "Sealed Secrets",
+        "Doppler"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-019",
+    "title": "Architecture Decision: Dead Letter Queues and Exponential Jitter for Asynchronous Jobs",
+    "type": "architecture_decision",
+    "project": "Event Processing",
+    "technology": "Kafka DLQ + Exponential Backoff",
+    "author": "Priya Sharma (Backend Lead), Dave Chen (Senior Engineer)",
+    "date": "2025-02-08",
+    "event": "Architecture proposal for Kafka DLQ + Exponential Backoff in Event Processing",
+    "context": "Prevent corrupted payloads from permanently blocking partition offset progression.",
+    "decision": "Implement mandatory Dead Letter Queues (DLQ) with exponential jitter backoff and poison pill isolation across all Kafka consumer pipelines.",
+    "action": "Adopted Kafka DLQ + Exponential Backoff for Event Processing",
+    "outcome": "Zero event processing pipeline stalls in Q1 2025. DLQ alerting routed 14 malformed third-party webhook payloads directly to engineering triage.",
+    "lesson": "Always attach original exception stack traces, schema version headers, and ingestion timestamps to DLQ envelope headers.",
+    "summary": "Decision to adopt Kafka DLQ + Exponential Backoff. Outcome: Zero event processing pipeline stalls in Q1 2025. DLQ alerting routed 14 malformed third-party webhook payloads directly to engineering triage.. Lesson: Always attach original exception stack traces, schema version headers, and ingestion timestamps to DLQ envelope headers.",
+    "tags": [
+      "messaging",
+      "kafka dlq + exponential backoff",
+      "event processing",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-019",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Discard failing messages",
+        "Infinite retry loops",
+        "Manual database logging"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-ADR-020",
+    "title": "Architecture Decision: Unified Caching Strategy v2: Tiered Cache Invalidation & Eviction Safeguards",
+    "type": "architecture_decision",
+    "project": "Core Infrastructure",
+    "technology": "Multi-Tier Caching Architecture",
+    "author": "Elena Vance (Principal Architect), Priya Sharma (Backend Lead)",
+    "date": "2025-03-01",
+    "event": "Architecture proposal for Multi-Tier Caching Architecture in Core Infrastructure",
+    "context": "Synthesize lessons learned from INC-101, ADR-002, and ADR-006 into a rigorous architectural standard.",
+    "decision": "Codify company-wide Caching Policy v2: (1) Local L1 LRU for hot micro-reads, (2) Distributed L2 (DynamoDB or isolated Redis cluster with jittered TTL and mutex locks), (3) Mandatory event-driven webhook invalidation, (4) Strict ban on unjittered global cache wipes.",
+    "action": "Adopted Multi-Tier Caching Architecture for Core Infrastructure",
+    "outcome": "Standardized cache client library adopted across all 18 backend services with 99.995% uptime.",
+    "lesson": "Caching is not a one-size-fits-all tool. Workload characterization (read/write ratio, access distribution, acceptable staleness) must precede caching technology selection.",
+    "summary": "Decision to adopt Multi-Tier Caching Architecture. Outcome: Standardized cache client library adopted across all 18 backend services with 99.995% uptime.. Lesson: Caching is not a one-size-fits-all tool. Workload characterization (read/write ratio, access distribution, acceptable staleness) must precede caching technology selection.",
+    "tags": [
+      "caching",
+      "multi-tier caching architecture",
+      "core infrastructure",
+      "adr",
+      "accepted"
+    ],
+    "source_id": "ADR-020",
+    "source_type": "adr",
+    "confidence_score": 0.98,
+    "metadata": {
+      "alternatives": [
+        "Ad-hoc service-by-service caching",
+        "Global Redis only",
+        "No caching layer"
+      ],
+      "status": "Accepted"
+    }
+  },
+  {
+    "id": "MEM-INC-101",
+    "title": "Incident: Redis Cache Stampede Causing Recommendation Service Outage",
+    "type": "engineering_incident",
+    "project": "Recommendation Service & Redis Cluster",
+    "technology": "Recommendation Service",
+    "author": "Priya Sharma (Backend Lead)",
+    "date": "2024-01-26",
+    "event": "Outage/Degradation in Recommendation Service & Redis Cluster (P1 - Critical)",
+    "context": "p99 latency surged from 18ms to 4,800ms; Recommendation Service error rate hit 85%; Primary PostgreSQL CPU pinned at 100%.",
+    "decision": "Emergency remediation led by Priya Sharma (Backend Lead)",
+    "action": "Scaled up PostgreSQL Aurora read replicas.; Applied an emergency hotfix adding mutex locking (single-flight) on cache miss.; Introduced \u00b120% randomized jitter to cache TTLs.; Decided in postmortem to initiate architectural review of Redis caching strategy (led to ADR-006).",
+    "outcome": "Cache stampede mitigated by single-flight query coalescing and TTL jitter. Service stabilized at 14:22 UTC. (Impact: $45,000 estimated lost conversion revenue; 120 customer support tickets.)",
+    "lesson": "Never use fixed TTLs on high-traffic keys. Implement single-flight / mutex query coalescing on cache misses to prevent thundering herd database destruction.",
+    "summary": "Incident in Recommendation Service & Redis Cluster. Root Cause: A marketing flash push notification sent 50,000 concurrent users to the homepage. The Redis cache key for default recommendation rankings expired simultaneously (zero TTL jitter). 50,000 requests simultaneously bypassed the cache and hit the un-indexed complex SQL join query on PostgreSQL, saturating all DB worker threads.. Lesson: Never use fixed TTLs on high-traffic keys. Implement single-flight / mutex query coalescing on cache misses to prevent thundering herd database destruction.",
+    "tags": [
+      "incident",
+      "p1 - critical",
+      "recommendation service & redis cluster",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-101",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "A marketing flash push notification sent 50,000 concurrent users to the homepage. The Redis cache key for default recommendation rankings expired simultaneously (zero TTL jitter). 50,000 requests simultaneously bypassed the cache and hit the un-indexed complex SQL join query on PostgreSQL, saturating all DB worker threads.",
+      "related_adrs": [
+        "ADR-002",
+        "ADR-006",
+        "ADR-020"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-102",
+    "title": "Incident: Database Connection Exhaustion During Black Friday Traffic Burst",
+    "type": "engineering_incident",
+    "project": "Core PostgreSQL & Microservices",
+    "technology": "Core PostgreSQL",
+    "author": "Marcus Brody (Lead DB Admin)",
+    "date": "2023-11-24",
+    "event": "Outage/Degradation in Core PostgreSQL & Microservices (P1 - Critical)",
+    "context": "All backend services logged `FATAL: remaining connection slots are reserved for non-replication superuser connections`; HTTP 500 errors across 90% of endpoints.",
+    "decision": "Emergency remediation led by Marcus Brody (Lead DB Admin)",
+    "action": "Temporarily reduced pod replica count and lowered local connection pool sizes.; Restarted PostgreSQL to clear stale idle connections.; Authored and approved ADR-010 to deploy PgBouncer connection pooling.",
+    "outcome": "Immediate pod throttling restored database access; PgBouncer was deployed within 10 days. (Impact: 42 minutes of complete payment and checkout unavailability.)",
+    "lesson": "Application-level connection pooling does not scale under elastic Kubernetes autoscaling. Centralized connection poolers like PgBouncer are mandatory.",
+    "summary": "Incident in Core PostgreSQL & Microservices. Root Cause: Kubernetes Horizontal Pod Autoscaler scaled 6 microservices from 4 pods to 30 pods each. Each pod had a local connection pool size of 20, attempting to open 3,600 simultaneous persistent TCP connections to PostgreSQL, which had a `max_connections` limit of 1,000.. Lesson: Application-level connection pooling does not scale under elastic Kubernetes autoscaling. Centralized connection poolers like PgBouncer are mandatory.",
+    "tags": [
+      "incident",
+      "p1 - critical",
+      "core postgresql & microservices",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-102",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "Kubernetes Horizontal Pod Autoscaler scaled 6 microservices from 4 pods to 30 pods each. Each pod had a local connection pool size of 20, attempting to open 3,600 simultaneous persistent TCP connections to PostgreSQL, which had a `max_connections` limit of 1,000.",
+      "related_adrs": [
+        "ADR-001",
+        "ADR-005",
+        "ADR-010"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-103",
+    "title": "Incident: Firebase Authentication Global Rate Limiting Blackout",
+    "type": "engineering_incident",
+    "project": "Auth Service (Firebase)",
+    "technology": "Auth Service (Firebase)",
+    "author": "Sarah Jenkins (Security Lead)",
+    "date": "2023-08-02",
+    "event": "Outage/Degradation in Auth Service (Firebase) (P2 - Major)",
+    "context": "European users encountered `auth/too-many-requests` and could not log in; mobile client onboarding failure rate reached 65%.",
+    "decision": "Emergency remediation led by Sarah Jenkins (Security Lead)",
+    "action": "Requested emergency quota increase from Google Cloud support.; Implemented client-side retry delay with exponential backoff.; Convened architecture review leading to ADR-003 (migration to custom OAuth2/JWT).",
+    "outcome": "Quota increased by Google Cloud after 2 hours; initiated project to replace third-party auth provider. (Impact: 1,400 new users failed to complete sign-up during marketing campaign.)",
+    "lesson": "Relying on external third-party authentication services with hard proprietary rate limits poses existential scaling risks for B2B multi-tenant applications.",
+    "summary": "Incident in Auth Service (Firebase). Root Cause: Firebase Auth project-level IP rate limits were triggered after a viral enterprise onboarding campaign launched in Germany without prior quota increase approval from Google Cloud support.. Lesson: Relying on external third-party authentication services with hard proprietary rate limits poses existential scaling risks for B2B multi-tenant applications.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "auth service (firebase)",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-103",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "Firebase Auth project-level IP rate limits were triggered after a viral enterprise onboarding campaign launched in Germany without prior quota increase approval from Google Cloud support.",
+      "related_adrs": [
+        "ADR-003"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-104",
+    "title": "Incident: Kafka Consumer Group Cascading Rebalance Storm",
+    "type": "engineering_incident",
+    "project": "Kafka Event Bus & Billing Consumers",
+    "technology": "Kafka Event Bus",
+    "author": "Alex Rivera (Infra Lead)",
+    "date": "2024-02-14",
+    "event": "Outage/Degradation in Kafka Event Bus & Billing Consumers (P2 - Major)",
+    "context": "Billing event processing lag climbed to 450,000 messages; CPU usage on worker pods spiked to 100% with continuous rebalancing logs.",
+    "decision": "Emergency remediation led by Alex Rivera (Infra Lead)",
+    "action": "Paused rolling deployment in ArgoCD.; Increased `max.poll.interval.ms` from 300,000ms to 600,000ms and heartbeat interval to 10,000ms.; Enabled Kafka Static Group Membership (`group.instance.id`).",
+    "outcome": "Consumer group stabilized once static membership was applied, backlog cleared in 35 minutes. (Impact: Subscription renewals delayed by 2 hours; no duplicate charges occurred.)",
+    "lesson": "In Kubernetes environments with frequent pod cycling, static group membership is essential to prevent rebalance cascades.",
+    "summary": "Incident in Kafka Event Bus & Billing Consumers. Root Cause: A rolling deployment triggered rapid pod terminations. Long GC pauses and default 3000ms heartbeat timeouts caused the Kafka broker to repeatedly mark alive consumers dead, triggering a continuous feedback rebalance loop.. Lesson: In Kubernetes environments with frequent pod cycling, static group membership is essential to prevent rebalance cascades.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "kafka event bus & billing consumers",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-104",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "A rolling deployment triggered rapid pod terminations. Long GC pauses and default 3000ms heartbeat timeouts caused the Kafka broker to repeatedly mark alive consumers dead, triggering a continuous feedback rebalance loop.",
+      "related_adrs": [
+        "ADR-004",
+        "ADR-019"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-105",
+    "title": "Incident: Memory Leak in GraphQL Gateway under Heavy Nested Queries",
+    "type": "engineering_incident",
+    "project": "Client GraphQL Gateway",
+    "technology": "Client GraphQL Gateway",
+    "author": "Zack Taylor (Frontend Lead)",
+    "date": "2024-04-03",
+    "event": "Outage/Degradation in Client GraphQL Gateway (P2 - Major)",
+    "context": "Gateway pods restarting every 15 minutes due to `OOMKilled`; response times degrading monotonically before crashes.",
+    "decision": "Emergency remediation led by Zack Taylor (Frontend Lead)",
+    "action": "Temporarily scaled memory limits from 1GB to 4GB.; Deployed query depth limiter (maximum depth of 6).; Migrated GraphQL gateway to Rust-based Apollo Router (ADR-007).",
+    "outcome": "Query depth and complexity limits deployed; memory stabilized immediately. (Impact: Intermittent 502 Bad Gateway errors observed by 8% of web app users.)",
+    "lesson": "Never expose an unconstrained GraphQL endpoint to the public Internet without AST cache validation and query depth limiters.",
+    "summary": "Incident in Client GraphQL Gateway. Root Cause: V8 heap memory leaked due to un-cached schema AST parsing and circular GraphQL query fragments sent by an un-throttled third-party scraper.. Lesson: Never expose an unconstrained GraphQL endpoint to the public Internet without AST cache validation and query depth limiters.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "client graphql gateway",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-105",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "V8 heap memory leaked due to un-cached schema AST parsing and circular GraphQL query fragments sent by an un-throttled third-party scraper.",
+      "related_adrs": [
+        "ADR-007",
+        "ADR-014"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-106",
+    "title": "Incident: Cascading Kubernetes Node OOMKilled Panic",
+    "type": "engineering_incident",
+    "project": "EKS Cluster & Analytics Service",
+    "technology": "EKS Cluster",
+    "author": "Alex Rivera (Infra Lead)",
+    "date": "2024-05-18",
+    "event": "Outage/Degradation in EKS Cluster & Analytics Service (P1 - Critical)",
+    "context": "3 worker nodes entered `NotReady` state; 45 pods evicted simultaneously across multiple namespaces.",
+    "decision": "Emergency remediation led by Alex Rivera (Infra Lead)",
+    "action": "Drained and recycled degraded worker nodes.; Enforced strict Kubernetes `LimitRange` and `ResourceQuota` policies across all namespaces.; Added Chaos Mesh drill to test node memory limits (ADR-017).",
+    "outcome": "Cluster recovered after node recycling; Resource quotas blocked future unbounded pods. (Impact: 12 internal microservices briefly evicted; automated failover restored user traffic in 14 minutes.)",
+    "lesson": "Always enforce namespace-wide LimitRanges. Unbounded memory limits in any single container threaten entire physical cluster nodes.",
+    "summary": "Incident in EKS Cluster & Analytics Service. Root Cause: An Analytics worker pod was configured without memory limits (`limits.memory`). When generating an export report for a huge enterprise customer, it consumed 64GB RAM, starving the `kubelet` and `containerd` daemons of OS memory.. Lesson: Always enforce namespace-wide LimitRanges. Unbounded memory limits in any single container threaten entire physical cluster nodes.",
+    "tags": [
+      "incident",
+      "p1 - critical",
+      "eks cluster & analytics service",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-106",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "An Analytics worker pod was configured without memory limits (`limits.memory`). When generating an export report for a huge enterprise customer, it consumed 64GB RAM, starving the `kubelet` and `containerd` daemons of OS memory.",
+      "related_adrs": [
+        "ADR-005",
+        "ADR-017"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-107",
+    "title": "Incident: Split-Brain Condition During PostgreSQL Primary Failover",
+    "type": "engineering_incident",
+    "project": "Aurora PostgreSQL Primary Cluster",
+    "technology": "Aurora PostgreSQL Primary Cluster",
+    "author": "Marcus Brody (Lead DB Admin)",
+    "date": "2024-07-09",
+    "event": "Outage/Degradation in Aurora PostgreSQL Primary Cluster (P1 - Critical)",
+    "context": "Conflicting transaction IDs logged; some writes succeeded on old primary while new writes routed to promoted replica.",
+    "decision": "Emergency remediation led by Marcus Brody (Lead DB Admin)",
+    "action": "Isolated the old primary node and demoted it to read-only.; Executed automated reconciliation script to merge 48 divergent records from WAL logs.; Lowered Route53 / internal DNS TTLs to 5 seconds and enabled aggressive fencing.",
+    "outcome": "Data reconciliation verified 100% consistent; DNS TTL lowered. (Impact: 48 invoice records required manual reconciliation; customer transactions were paused for 40 minutes.)",
+    "lesson": "Failover automation must strictly enforce STONITH (Shoot The Other Node In The Head) fencing before replica promotion.",
+    "summary": "Incident in Aurora PostgreSQL Primary Cluster. Root Cause: An AWS AZ network partition triggered an automatic replica promotion, but network fencing did not sever connectivity to the isolated old primary fast enough while DNS TTLs were set to 300s.. Lesson: Failover automation must strictly enforce STONITH (Shoot The Other Node In The Head) fencing before replica promotion.",
+    "tags": [
+      "incident",
+      "p1 - critical",
+      "aurora postgresql primary cluster",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-107",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "An AWS AZ network partition triggered an automatic replica promotion, but network fencing did not sever connectivity to the isolated old primary fast enough while DNS TTLs were set to 300s.",
+      "related_adrs": [
+        "ADR-001",
+        "ADR-010"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-108",
+    "title": "Incident: Payment Webhook Double-Processing Race Condition",
+    "type": "engineering_incident",
+    "project": "Stripe Webhook Handler & Billing Service",
+    "technology": "Stripe Webhook Handler",
+    "author": "Priya Sharma (Backend Lead)",
+    "date": "2024-08-30",
+    "event": "Outage/Degradation in Stripe Webhook Handler & Billing Service (P2 - Major)",
+    "context": "34 customer accounts were billed twice for monthly subscription renewals.",
+    "decision": "Emergency remediation led by Priya Sharma (Backend Lead)",
+    "action": "Issued immediate automated refunds and apologetic emails to affected customers.; Implemented Redis/DynamoDB distributed mutex locks on `event_id` with 24-hour expiration.; Migrated billing orchestrations to Temporal.io (ADR-012).",
+    "outcome": "Idempotency key check deployed; duplicate charges refunded in full. (Impact: $3,400 in erroneous charges immediately refunded; reputation impact mitigated with proactive credits.)",
+    "lesson": "All external webhook handlers and financial mutations must enforce atomic idempotency keys at the entry gateway.",
+    "summary": "Incident in Stripe Webhook Handler & Billing Service. Root Cause: Stripe delivered duplicate webhook events due to intermittent network latency. The webhook receiver lacked an atomic distributed idempotency lock, allowing two concurrent worker threads to both execute the payment capture routine.. Lesson: All external webhook handlers and financial mutations must enforce atomic idempotency keys at the entry gateway.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "stripe webhook handler & billing service",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-108",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "Stripe delivered duplicate webhook events due to intermittent network latency. The webhook receiver lacked an atomic distributed idempotency lock, allowing two concurrent worker threads to both execute the payment capture routine.",
+      "related_adrs": [
+        "ADR-012",
+        "ADR-019"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-109",
+    "title": "Incident: CloudFront Stale Cache Serving Deprecated JavaScript Bundles",
+    "type": "engineering_incident",
+    "project": "CloudFront CDN & Frontend SPA",
+    "technology": "CloudFront CDN",
+    "author": "Zack Taylor (Frontend Lead)",
+    "date": "2024-10-22",
+    "event": "Outage/Degradation in CloudFront CDN & Frontend SPA (P3 - Moderate)",
+    "context": "Users reported broken UI buttons and JavaScript runtime exceptions: `Uncaught TypeError: window.__nova_auth is undefined`.",
+    "decision": "Emergency remediation led by Zack Taylor (Frontend Lead)",
+    "action": "Created CloudFront cache invalidation for `/*`.; Updated S3 deployment script to set `Cache-Control: no-cache, no-store, must-revalidate` specifically for `index.html` while keeping immutable 1-year cache on hashed JS/CSS assets.; Documented in ADR-011.",
+    "outcome": "CDN cache invalidated; deployment pipeline updated. (Impact: Frontend UI glitch affected approximately 450 active users.)",
+    "lesson": "HTML entrypoints must never be cached with long TTLs; only content-hashed static assets should have immutable cache headers.",
+    "summary": "Incident in CloudFront CDN & Frontend SPA. Root Cause: CI/CD deployment script pushed new `index.html` referencing new chunk hashes, but CloudFront CDN cache TTL for `index.html` was configured with `Cache-Control: public, max-age=86400` without automated invalidation.. Lesson: HTML entrypoints must never be cached with long TTLs; only content-hashed static assets should have immutable cache headers.",
+    "tags": [
+      "incident",
+      "p3 - moderate",
+      "cloudfront cdn & frontend spa",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-109",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "CI/CD deployment script pushed new `index.html` referencing new chunk hashes, but CloudFront CDN cache TTL for `index.html` was configured with `Cache-Control: public, max-age=86400` without automated invalidation.",
+      "related_adrs": [
+        "ADR-011"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-110",
+    "title": "Incident: HashiCorp Vault Token Expiry Causing Microservice Auth Blackout",
+    "type": "engineering_incident",
+    "project": "Vault Secrets & Service Mesh",
+    "technology": "Vault Secrets",
+    "author": "Sarah Jenkins (Security Lead)",
+    "date": "2025-01-28",
+    "event": "Outage/Degradation in Vault Secrets & Service Mesh (P1 - Critical)",
+    "context": "All 14 backend microservices began logging `403 Permission Denied: token expired` when attempting to fetch database credentials; all API calls failed.",
+    "decision": "Emergency remediation led by Sarah Jenkins (Security Lead)",
+    "action": "Issued emergency root token to kickstart service accounts.; Updated Vault agent configuration with exponential retry loops and fallback grace periods.; Added Prometheus alert for Vault token TTL < 4 hours.",
+    "outcome": "Tokens refreshed and automated renewal watchdog deployed. (Impact: 32 minutes of global API downtime.)",
+    "lesson": "Authentication agents must have resilient retry loops and proactive alerts for impending token expiration.",
+    "summary": "Incident in Vault Secrets & Service Mesh. Root Cause: The Vault agent sidecar token renewal loop encountered a transient HTTP 500 error from Vault during a minor cluster maintenance. The renewal script did not retry and silently exited, causing tokens to expire 24 hours later.. Lesson: Authentication agents must have resilient retry loops and proactive alerts for impending token expiration.",
+    "tags": [
+      "incident",
+      "p1 - critical",
+      "vault secrets & service mesh",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-110",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "The Vault agent sidecar token renewal loop encountered a transient HTTP 500 error from Vault during a minor cluster maintenance. The renewal script did not retry and silently exited, causing tokens to expire 24 hours later.",
+      "related_adrs": [
+        "ADR-018"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-111",
+    "title": "Incident: DynamoDB Hot Partition Key Throttling in Search Indexer",
+    "type": "engineering_incident",
+    "project": "DynamoDB & Search Index Pipeline",
+    "technology": "DynamoDB",
+    "author": "Dave Chen (Senior Engineer)",
+    "date": "2024-11-12",
+    "event": "Outage/Degradation in DynamoDB & Search Index Pipeline (P2 - Major)",
+    "context": "Search index lag increased by 3 hours; `ProvisionedThroughputExceededException` errors flooded Datadog.",
+    "decision": "Emergency remediation led by Dave Chen (Senior Engineer)",
+    "action": "Enabled DynamoDB On-Demand capacity mode temporarily.; Redesigned partition key schema to use synthetic sharding: `created_date#hash(tenant_id, 8)`.; Re-indexed search table.",
+    "outcome": "Synthetic sharding distributed write throughput evenly across 32 partitions. (Impact: Search results delayed by 2 hours for newly uploaded items.)",
+    "lesson": "Never use monotonically increasing values or date strings as raw partition keys in NoSQL distributed databases without synthetic salt sharding.",
+    "summary": "Incident in DynamoDB & Search Index Pipeline. Root Cause: The partition key was chosen as `created_date` (YYYY-MM-DD). All writes for the current day targeted a single physical storage partition, exceeding the 1,000 WCU per-partition limit despite high overall table capacity.. Lesson: Never use monotonically increasing values or date strings as raw partition keys in NoSQL distributed databases without synthetic salt sharding.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "dynamodb & search index pipeline",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-111",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "The partition key was chosen as `created_date` (YYYY-MM-DD). All writes for the current day targeted a single physical storage partition, exceeding the 1,000 WCU per-partition limit despite high overall table capacity.",
+      "related_adrs": [
+        "ADR-006",
+        "ADR-013"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-112",
+    "title": "Incident: S3 Ingress Network Saturation During Nightly Financial ETL",
+    "type": "engineering_incident",
+    "project": "Asset Pipeline & Financial ETL",
+    "technology": "Asset Pipeline",
+    "author": "Alex Rivera (Infra Lead)",
+    "date": "2024-12-04",
+    "event": "Outage/Degradation in Asset Pipeline & Financial ETL (P3 - Moderate)",
+    "context": "Web application PDF report downloads timed out during 02:00 UTC nightly backup window.",
+    "decision": "Emergency remediation led by Alex Rivera (Infra Lead)",
+    "action": "Restructured S3 key hierarchy to prefix with hash suffixes (`s3://novastack-data/{hash(id)}/...`).; Applied rate limiter to ETL download worker pool.",
+    "outcome": "S3 prefix partitioning resolved rate limits; PDF download latency returned to normal. (Impact: No data loss; background ETL took 45 minutes longer to complete.)",
+    "lesson": "Organize high-throughput S3 storage keys with randomized or hashed prefix namespaces to maximize AWS S3 partition distribution.",
+    "summary": "Incident in Asset Pipeline & Financial ETL. Root Cause: The financial reporting ETL batch worker opened 500 concurrent multipart download threads from the same S3 prefix without request rate smoothing, hitting S3 prefix rate limits (3,500 PUT / 5,500 GET per prefix/sec).. Lesson: Organize high-throughput S3 storage keys with randomized or hashed prefix namespaces to maximize AWS S3 partition distribution.",
+    "tags": [
+      "incident",
+      "p3 - moderate",
+      "asset pipeline & financial etl",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-112",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "The financial reporting ETL batch worker opened 500 concurrent multipart download threads from the same S3 prefix without request rate smoothing, hitting S3 prefix rate limits (3,500 PUT / 5,500 GET per prefix/sec).",
+      "related_adrs": [
+        "ADR-011"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-113",
+    "title": "Incident: Unhandled gRPC Deadline Exceeded Causing Worker Thread Exhaustion",
+    "type": "engineering_incident",
+    "project": "Payment Gateway to Risk Evaluation Service",
+    "technology": "Payment Gateway to Risk Evaluation Service",
+    "author": "Priya Sharma (Backend Lead)",
+    "date": "2024-06-28",
+    "event": "Outage/Degradation in Payment Gateway to Risk Evaluation Service (P2 - Major)",
+    "context": "Payment gateway HTTP threads hung indefinitely; client requests timed out after 60s with 504 Gateway Timeout.",
+    "decision": "Emergency remediation led by Priya Sharma (Backend Lead)",
+    "action": "Set default 2000ms deadline on all outbound gRPC stubs.; Configured circuit breaker pattern with resilience fallback to review queue.; Updated team gRPC boilerplate standards in ADR-008.",
+    "outcome": "Deadlines deployed; unblocked threads and restored payment throughput. (Impact: 110 payment attempts timed out and required retry.)",
+    "lesson": "Every RPC call without a strict deadline is an outage waiting to happen. Never instantiate a gRPC client stub without context timeouts.",
+    "summary": "Incident in Payment Gateway to Risk Evaluation Service. Root Cause: The gRPC client connecting the Payment Gateway to the Risk Service did not specify a `grpc.deadline`. When the Risk Service stalled on a third-party credit check API, all Payment Gateway worker threads blocked waiting indefinitely.. Lesson: Every RPC call without a strict deadline is an outage waiting to happen. Never instantiate a gRPC client stub without context timeouts.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "payment gateway to risk evaluation service",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-113",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "The gRPC client connecting the Payment Gateway to the Risk Service did not specify a `grpc.deadline`. When the Risk Service stalled on a third-party credit check API, all Payment Gateway worker threads blocked waiting indefinitely.",
+      "related_adrs": [
+        "ADR-008"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-114",
+    "title": "Incident: JWT Secret Key Rotation Misconfiguration During Deployment",
+    "type": "engineering_incident",
+    "project": "Auth Service & API Gateway",
+    "technology": "Auth Service",
+    "author": "Sarah Jenkins (Security Lead)",
+    "date": "2024-09-18",
+    "event": "Outage/Degradation in Auth Service & API Gateway (P2 - Major)",
+    "context": "All active logged-in users suddenly logged out and received `401 Unauthorized: invalid signature`.",
+    "decision": "Emergency remediation led by Sarah Jenkins (Security Lead)",
+    "action": "Re-published previous public JWKS verification key alongside the new key in JWKS endpoint.; Updated key rotation policy to retain previous keys for 48 hours.; Documented dual-key verification requirement.",
+    "outcome": "Dual JWKS key set restored session validity for existing users. (Impact: Approximately 3,800 active users were forced to re-authenticate.)",
+    "lesson": "Cryptographic key rotation must always support N-1 key overlap verification until all active token lifetimes have elapsed.",
+    "summary": "Incident in Auth Service & API Gateway. Root Cause: The automated secret rotation pipeline deleted the previous public verification key (JWKS) immediately upon publishing the new key, rather than supporting a dual-key grace overlap period for currently active 1-hour access tokens.. Lesson: Cryptographic key rotation must always support N-1 key overlap verification until all active token lifetimes have elapsed.",
+    "tags": [
+      "incident",
+      "p2 - major",
+      "auth service & api gateway",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-114",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "The automated secret rotation pipeline deleted the previous public verification key (JWKS) immediately upon publishing the new key, rather than supporting a dual-key grace overlap period for currently active 1-hour access tokens.",
+      "related_adrs": [
+        "ADR-003",
+        "ADR-018"
+      ]
+    }
+  },
+  {
+    "id": "MEM-INC-115",
+    "title": "Incident: Background PDF Generator Worker Thread Starvation",
+    "type": "engineering_incident",
+    "project": "Document Generation Service",
+    "technology": "Document Generation Service",
+    "author": "Dave Chen (Senior Engineer)",
+    "date": "2025-02-19",
+    "event": "Outage/Degradation in Document Generation Service (P3 - Moderate)",
+    "context": "End-of-month financial PDF statements queued for 4 hours; document download latency exceeded SLA.",
+    "decision": "Emergency remediation led by Dave Chen (Senior Engineer)",
+    "action": "Isolated Chromium rendering into dedicated detached worker containers with CPU resource limits.; Migrated document generation queue to Kafka DLQ pipeline (ADR-019).; Added horizontal autoscaling based on queue length.",
+    "outcome": "Isolated worker cluster cleared 15,000 PDF backlogs within 30 minutes. (Impact: Monthly invoice delivery delayed by 3 hours for Pro tier customers.)",
+    "lesson": "Heavy CPU-bound tasks (like browser rendering or cryptography) must never execute directly in the async I/O event loop.",
+    "summary": "Incident in Document Generation Service. Root Cause: Headless Chromium PDF rendering processes were launched synchronously inside the main async event loop worker process, blocking CPU cores and starving async I/O socket events.. Lesson: Heavy CPU-bound tasks (like browser rendering or cryptography) must never execute directly in the async I/O event loop.",
+    "tags": [
+      "incident",
+      "p3 - moderate",
+      "document generation service",
+      "outage",
+      "postmortem"
+    ],
+    "source_id": "INC-115",
+    "source_type": "incident",
+    "confidence_score": 0.99,
+    "metadata": {
+      "root_cause": "Headless Chromium PDF rendering processes were launched synchronously inside the main async event loop worker process, blocking CPU cores and starving async I/O socket events.",
+      "related_adrs": [
+        "ADR-011",
+        "ADR-019"
+      ]
+    }
+  },
+  {
+    "id": "MEM-GH-101",
+    "title": "GitHub Issue: feat: Evaluate Redis vs DynamoDB for high-throughput score caching",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "caching",
+    "author": "dchen",
+    "date": "2023-05-20",
+    "event": "Issue GH-101 filed by dchen",
+    "context": "feat: Evaluate Redis vs DynamoDB for high-throughput score caching",
+    "decision": "Status: Closed",
+    "action": "Processed with tags: caching, architecture",
+    "outcome": "Merged / Completed (Closed)",
+    "lesson": "Tracked in engineering workflow under GH-101",
+    "summary": "feat: Evaluate Redis vs DynamoDB for high-throughput score caching",
+    "tags": [
+      "caching",
+      "architecture",
+      "github",
+      "issue"
+    ],
+    "source_id": "GH-101",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-102",
+    "title": "GitHub Pull Request: fix: Add single-flight query mutex lock to recommendation cache misses",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "caching",
+    "author": "psharma",
+    "date": "2024-01-27",
+    "event": "Pull Request GH-102 filed by psharma",
+    "context": "fix: Add single-flight query mutex lock to recommendation cache misses",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: caching, hotfix, INC-101",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-102",
+    "summary": "fix: Add single-flight query mutex lock to recommendation cache misses",
+    "tags": [
+      "caching",
+      "hotfix",
+      "INC-101",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-102",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-103",
+    "title": "GitHub Pull Request: refactor: Migrate Recommendation Service caching from Redis to Local LRU + DynamoDB",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "caching",
+    "author": "psharma",
+    "date": "2024-02-01",
+    "event": "Pull Request GH-103 filed by psharma",
+    "context": "refactor: Migrate Recommendation Service caching from Redis to Local LRU + DynamoDB",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: caching, ADR-006",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-103",
+    "summary": "refactor: Migrate Recommendation Service caching from Redis to Local LRU + DynamoDB",
+    "tags": [
+      "caching",
+      "ADR-006",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-103",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-104",
+    "title": "GitHub Pull Request: infra: Deploy PgBouncer connection pooler in front of PostgreSQL Aurora",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "database",
+    "author": "mbrody",
+    "date": "2024-06-03",
+    "event": "Pull Request GH-104 filed by mbrody",
+    "context": "infra: Deploy PgBouncer connection pooler in front of PostgreSQL Aurora",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: database, ADR-010, INC-102",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-104",
+    "summary": "infra: Deploy PgBouncer connection pooler in front of PostgreSQL Aurora",
+    "tags": [
+      "database",
+      "ADR-010",
+      "INC-102",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-104",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-105",
+    "title": "GitHub Pull Request: security: Replace Firebase Auth with custom OAuth2 and RS256 JWT tokens",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "auth",
+    "author": "sjenkins",
+    "date": "2023-08-18",
+    "event": "Pull Request GH-105 filed by sjenkins",
+    "context": "security: Replace Firebase Auth with custom OAuth2 and RS256 JWT tokens",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: auth, ADR-003",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-105",
+    "summary": "security: Replace Firebase Auth with custom OAuth2 and RS256 JWT tokens",
+    "tags": [
+      "auth",
+      "ADR-003",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-105",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-106",
+    "title": "GitHub Pull Request: feat: Standardize inter-service RPC communication on gRPC with Protobuf",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "grpc",
+    "author": "evance",
+    "date": "2024-04-15",
+    "event": "Pull Request GH-106 filed by evance",
+    "context": "feat: Standardize inter-service RPC communication on gRPC with Protobuf",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: grpc, ADR-008",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-106",
+    "summary": "feat: Standardize inter-service RPC communication on gRPC with Protobuf",
+    "tags": [
+      "grpc",
+      "ADR-008",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-106",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-107",
+    "title": "GitHub Pull Request: fix: Set mandatory 2000ms gRPC deadlines on outbound client stubs",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "grpc",
+    "author": "psharma",
+    "date": "2024-06-29",
+    "event": "Pull Request GH-107 filed by psharma",
+    "context": "fix: Set mandatory 2000ms gRPC deadlines on outbound client stubs",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: grpc, reliability, INC-113",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-107",
+    "summary": "fix: Set mandatory 2000ms gRPC deadlines on outbound client stubs",
+    "tags": [
+      "grpc",
+      "reliability",
+      "INC-113",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-107",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-108",
+    "title": "GitHub Pull Request: infra: Configure Kafka static consumer group membership to prevent rebalances",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "kafka",
+    "author": "arivera",
+    "date": "2024-02-15",
+    "event": "Pull Request GH-108 filed by arivera",
+    "context": "infra: Configure Kafka static consumer group membership to prevent rebalances",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: kafka, INC-104",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-108",
+    "summary": "infra: Configure Kafka static consumer group membership to prevent rebalances",
+    "tags": [
+      "kafka",
+      "INC-104",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-108",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-109",
+    "title": "GitHub Pull Request: feat: Integrate Hindsight persistent organizational memory layer",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "ai",
+    "author": "evance",
+    "date": "2024-11-02",
+    "event": "Pull Request GH-109 filed by evance",
+    "context": "feat: Integrate Hindsight persistent organizational memory layer",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: ai, memory, ADR-015",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-109",
+    "summary": "feat: Integrate Hindsight persistent organizational memory layer",
+    "tags": [
+      "ai",
+      "memory",
+      "ADR-015",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-109",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-110",
+    "title": "GitHub Pull Request: docs: Publish Unified Caching Policy v2 standard guide",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "caching",
+    "author": "evance",
+    "date": "2025-02-28",
+    "event": "Pull Request GH-110 filed by evance",
+    "context": "docs: Publish Unified Caching Policy v2 standard guide",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: caching, standards, ADR-020",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-110",
+    "summary": "docs: Publish Unified Caching Policy v2 standard guide",
+    "tags": [
+      "caching",
+      "standards",
+      "ADR-020",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-110",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-111",
+    "title": "GitHub Pull Request: feat: Adopt Temporal.io for deterministic billing and onboarding workflows",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "orchestration",
+    "author": "psharma",
+    "date": "2024-08-15",
+    "event": "Pull Request GH-111 filed by psharma",
+    "context": "feat: Adopt Temporal.io for deterministic billing and onboarding workflows",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: orchestration, ADR-012",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-111",
+    "summary": "feat: Adopt Temporal.io for deterministic billing and onboarding workflows",
+    "tags": [
+      "orchestration",
+      "ADR-012",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-111",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-112",
+    "title": "GitHub Pull Request: fix: Enforce JWKS dual-key retention period during secret rotation",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "security",
+    "author": "sjenkins",
+    "date": "2024-09-19",
+    "event": "Pull Request GH-112 filed by sjenkins",
+    "context": "fix: Enforce JWKS dual-key retention period during secret rotation",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: security, auth, INC-114",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-112",
+    "summary": "fix: Enforce JWKS dual-key retention period during secret rotation",
+    "tags": [
+      "security",
+      "auth",
+      "INC-114",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-112",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-113",
+    "title": "GitHub Pull Request: perf: Add synthetic salt sharding to DynamoDB partition keys",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "database",
+    "author": "dchen",
+    "date": "2024-11-13",
+    "event": "Pull Request GH-113 filed by dchen",
+    "context": "perf: Add synthetic salt sharding to DynamoDB partition keys",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: database, dynamodb, INC-111",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-113",
+    "summary": "perf: Add synthetic salt sharding to DynamoDB partition keys",
+    "tags": [
+      "database",
+      "dynamodb",
+      "INC-111",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-113",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-114",
+    "title": "GitHub Pull Request: infra: Install Chaos Mesh and configure weekly latency injection drills",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "chaos",
+    "author": "arivera",
+    "date": "2024-12-14",
+    "event": "Pull Request GH-114 filed by arivera",
+    "context": "infra: Install Chaos Mesh and configure weekly latency injection drills",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: chaos, reliability, ADR-017",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-114",
+    "summary": "infra: Install Chaos Mesh and configure weekly latency injection drills",
+    "tags": [
+      "chaos",
+      "reliability",
+      "ADR-017",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-114",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-115",
+    "title": "GitHub Pull Request: feat: Deploy Apollo Router GraphQL gateway with depth limiters",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "graphql",
+    "author": "ztaylor",
+    "date": "2024-03-10",
+    "event": "Pull Request GH-115 filed by ztaylor",
+    "context": "feat: Deploy Apollo Router GraphQL gateway with depth limiters",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: graphql, gateway, ADR-007",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-115",
+    "summary": "feat: Deploy Apollo Router GraphQL gateway with depth limiters",
+    "tags": [
+      "graphql",
+      "gateway",
+      "ADR-007",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-115",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-116",
+    "title": "GitHub Pull Request: fix: Add no-cache headers to index.html and content hash for static assets",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "frontend",
+    "author": "ztaylor",
+    "date": "2024-10-23",
+    "event": "Pull Request GH-116 filed by ztaylor",
+    "context": "fix: Add no-cache headers to index.html and content hash for static assets",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: frontend, cdn, INC-109",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-116",
+    "summary": "fix: Add no-cache headers to index.html and content hash for static assets",
+    "tags": [
+      "frontend",
+      "cdn",
+      "INC-109",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-116",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-117",
+    "title": "GitHub Pull Request: security: Migrate database credentials to HashiCorp Vault dynamic leases",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "vault",
+    "author": "sjenkins",
+    "date": "2025-01-08",
+    "event": "Pull Request GH-117 filed by sjenkins",
+    "context": "security: Migrate database credentials to HashiCorp Vault dynamic leases",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: vault, security, ADR-018",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-117",
+    "summary": "security: Migrate database credentials to HashiCorp Vault dynamic leases",
+    "tags": [
+      "vault",
+      "security",
+      "ADR-018",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-117",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-118",
+    "title": "GitHub Pull Request: fix: Add retry watchdog loop for Vault sidecar agent token renewals",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "vault",
+    "author": "sjenkins",
+    "date": "2025-01-29",
+    "event": "Pull Request GH-118 filed by sjenkins",
+    "context": "fix: Add retry watchdog loop for Vault sidecar agent token renewals",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: vault, reliability, INC-110",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-118",
+    "summary": "fix: Add retry watchdog loop for Vault sidecar agent token renewals",
+    "tags": [
+      "vault",
+      "reliability",
+      "INC-110",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-118",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-119",
+    "title": "GitHub Pull Request: infra: Enforce Kubernetes LimitRange to prevent node OOMKilled evictions",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "k8s",
+    "author": "arivera",
+    "date": "2024-05-19",
+    "event": "Pull Request GH-119 filed by arivera",
+    "context": "infra: Enforce Kubernetes LimitRange to prevent node OOMKilled evictions",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: k8s, infra, INC-106",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-119",
+    "summary": "infra: Enforce Kubernetes LimitRange to prevent node OOMKilled evictions",
+    "tags": [
+      "k8s",
+      "infra",
+      "INC-106",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-119",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-GH-120",
+    "title": "GitHub Pull Request: feat: Implement Dead Letter Queues with exponential jitter on Kafka consumers",
+    "type": "github_issue",
+    "project": "Core Platform",
+    "technology": "kafka",
+    "author": "psharma",
+    "date": "2025-02-06",
+    "event": "Pull Request GH-120 filed by psharma",
+    "context": "feat: Implement Dead Letter Queues with exponential jitter on Kafka consumers",
+    "decision": "Status: Merged",
+    "action": "Processed with tags: kafka, dlq, ADR-019",
+    "outcome": "Merged / Completed (Merged)",
+    "lesson": "Tracked in engineering workflow under GH-120",
+    "summary": "feat: Implement Dead Letter Queues with exponential jitter on Kafka consumers",
+    "tags": [
+      "kafka",
+      "dlq",
+      "ADR-019",
+      "github",
+      "pull request"
+    ],
+    "source_id": "GH-120",
+    "source_type": "github",
+    "confidence_score": 0.9,
+    "metadata": {}
+  },
+  {
+    "id": "MEM-CUSTOM-00CA8B38",
+    "title": "INC-116: Test Ingestion Outage",
+    "type": "engineering_incident",
+    "project": "Event Bus",
+    "technology": "Kafka",
+    "author": "Engineering Team",
+    "date": "2026-09-27",
+    "event": "Lag increased. Context: Network glitch. Decision: Restarted consumers. Outcome: Recovered. Lesson: Set proper consumer timeouts.",
+    "context": "Network glitch. Decision: Restarted consumers. Outcome: Recovered. Lesson: Set proper consumer timeouts.",
+    "decision": "Restarted consumers. Outcome: Recovered. Lesson: Set proper consumer timeouts.",
+    "action": "Ingested into Event Bus",
+    "outcome": "Recovered. Lesson: Set proper consumer timeouts.",
+    "lesson": "Set proper consumer timeouts.",
+    "summary": "INC-116: Test Ingestion Outage: Set proper consumer timeouts.",
+    "tags": [
+      "engineering_incident",
+      "kafka",
+      "event bus",
+      "custom_ingest"
+    ],
+    "source_id": "MEM-CUSTOM-00CA8B38",
+    "source_type": "custom_document",
+    "confidence_score": 0.92,
+    "metadata": {
+      "raw_content_length": 135
+    }
+  },
+  {
+    "id": "MEM-INGEST-91FD98",
+    "title": "Replace shared Redis with DynamoDB & in-process LRU",
+    "type": "github_issue",
+    "project": "Redis cluster",
+    "technology": "AWS DynamoDB, Go-cache LRU",
+    "author": "Engineering Team",
+    "date": "2026-09-27",
+    "event": "Cache stampede vulnerability",
+    "context": "Shared Redis cluster with 15ms p99 network latency",
+    "decision": "Single-flight request coalescing mutexes, randomized TTL jitter, AWS DynamoDB",
+    "action": "Implemented coalescing mutexes, added TTL jitter, deployed DynamoDB",
+    "outcome": "Reduced read latency to 3.2ms p99, reduced infrastructure costs",
+    "lesson": "Enforce randomized TTL jitter, single-flight request coalescing",
+    "summary": "Mitigated cache stampede vulnerability, improved performance and reduced costs",
+    "tags": [
+      "github_issue",
+      "aws dynamodb, go-cache lru",
+      "redis cluster",
+      "institutional_memory",
+      "cache-performance",
+      "redis-migration"
+    ],
+    "source_id": "MEM-INGEST-91FD98",
+    "source_type": "ingested_document",
+    "confidence_score": 0.96,
+    "metadata": {
+      "risk_level": "High",
+      "safeguards": [
+        "Randomized TTL jitter",
+        "Single-flight request coalescing"
+      ],
+      "raw_length": 985,
+      "extracted_via": "ollama_llama3.2"
+    }
+  },
+  {
+    "id": "MEM-INGEST-60D568",
+    "title": "Replace shared Redis with DynamoDB & in-process LRU",
+    "type": "github_issue",
+    "project": " caching-layer",
+    "technology": "Go, Redis, DynamoDB",
+    "author": "Engineering Team",
+    "date": "2026-09-27",
+    "event": "Cache stampede vulnerability",
+    "context": "Shared Redis cluster had high network latency and suffered cache stampedes",
+    "decision": "Implemented single-flight request coalescing mutexes and randomized TTL jitter",
+    "action": "Deployed AWS DynamoDB with on-demand capacity",
+    "outcome": "Reduced read latency and eliminated cache stampede errors",
+    "lesson": "Enforce randomized TTL jitter and single-flight request coalescing",
+    "summary": "Mitigated cache stampede vulnerability, reduced latency and costs",
+    "tags": [
+      "github_issue",
+      "go, redis, dynamodb",
+      " caching-layer",
+      "institutional_memory",
+      "cache-stampede",
+      "latency-reduction"
+    ],
+    "source_id": "MEM-INGEST-60D568",
+    "source_type": "ingested_document",
+    "confidence_score": 0.96,
+    "metadata": {
+      "risk_level": "High",
+      "safeguards": [
+        "Randomized TTL jitter",
+        "Single-flight request coalescing"
+      ],
+      "raw_length": 983,
+      "extracted_via": "ollama_llama3.2"
+    }
+  },
+  {
+    "id": "MEM-INGEST-7717E8",
+    "title": "feat(cache): Replace shared Redis with DynamoDB & in-process LRU",
+    "type": "github_issue",
+    "project": "cache",
+    "technology": "AWS DynamoDB, Go-cache LRU",
+    "author": "Engineering Team",
+    "date": "2026-09-27",
+    "event": "cache stampede vulnerability",
+    "context": "Shared Redis cluster had 15ms p99 network latency and suffered cache stampedes when 50,000 keys expired concurrently during flash sales.",
+    "decision": "Implemented single-flight request coalescing mutexes on cache misses, added +/- 20% randomized TTL jitter to eliminate synchronized key expirations, and deployed AWS DynamoDB with on-demand capacity as the authoritative secondary store.",
+    "action": "Deployed AWS DynamoDB with on-demand capacity as the authoritative secondary store, implemented single-flight request coalescing mutexes on cache misses, and added +/- 20% randomized TTL jitter to eliminate synchronized key expirations.",
+    "outcome": "Recommendation score read latency dropped from 18ms to 3.2ms p99, Redis cluster infrastructure costs reduced by $4,200/month, and zero cache stampede errors during subsequent marketing surges.",
+    "lesson": "All caching layers must enforce randomized TTL jitter (+/-20%) and single-flight request coalescing. Shared in-memory caches must not be used for high-throughput read-heavy services.",
+    "summary": "Mitigated cache stampede vulnerability identified in INC-101 by replacing shared Redis cluster with local in-process Go-cache LRU backed by AWS DynamoDB for immutable long-term scores.",
+    "tags": [
+      "github_issue",
+      "aws dynamodb, go-cache lru",
+      "cache",
+      "institutional_memory",
+      "tag1",
+      "tag2"
+    ],
+    "source_id": "MEM-INGEST-7717E8",
+    "source_type": "ingested_document",
+    "confidence_score": 0.96,
+    "metadata": {
+      "risk_level": "High",
+      "safeguards": [
+        "Mandatory safeguard 1",
+        "Mandatory safeguard 2"
+      ],
+      "raw_length": 1144,
+      "extracted_via": "ollama_llama3.2"
+    }
+  }
+]
